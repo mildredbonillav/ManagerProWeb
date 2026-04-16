@@ -1,0 +1,73 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\mildr\\Desktop\\ManagerProWeb\\ManagerProWeb_backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DA069EB1-642A-5367-0A5C-877527A1F9DC}|ManagerProWeb.csproj|c:\\users\\mildr\\desktop\\managerproweb\\managerproweb_backend\\controllers\\infocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DA069EB1-642A-5367-0A5C-877527A1F9DC}|ManagerProWeb.csproj|solutionrelative:controllers\\infocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DA069EB1-642A-5367-0A5C-877527A1F9DC}|ManagerProWeb.csproj|c:\\users\\mildr\\desktop\\managerproweb\\managerproweb_backend\\models\\tdataaccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DA069EB1-642A-5367-0A5C-877527A1F9DC}|ManagerProWeb.csproj|solutionrelative:models\\tdataaccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "InfoController.cs",
+              "DocumentMoniker": "C:\\Users\\mildr\\Desktop\\ManagerProWeb\\ManagerProWeb_backend\\Controllers\\InfoController.cs",
+              "RelativeDocumentMoniker": "Controllers\\InfoController.cs",
+              "ToolTip": "C:\\Users\\mildr\\Desktop\\ManagerProWeb\\ManagerProWeb_backend\\Controllers\\InfoController.cs",
+              "RelativeToolTip": "Controllers\\InfoController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T06:00:14.355Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TDataAccess.cs",
+              "DocumentMoniker": "C:\\Users\\mildr\\Desktop\\ManagerProWeb\\ManagerProWeb_backend\\Models\\TDataAccess.cs",
+              "RelativeDocumentMoniker": "Models\\TDataAccess.cs",
+              "ToolTip": "C:\\Users\\mildr\\Desktop\\ManagerProWeb\\ManagerProWeb_backend\\Models\\TDataAccess.cs",
+              "RelativeToolTip": "Models\\TDataAccess.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T06:02:24.372Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "ManagerProWeb",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/Info": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}

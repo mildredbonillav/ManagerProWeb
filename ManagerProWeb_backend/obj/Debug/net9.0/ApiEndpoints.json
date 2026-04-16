@@ -1,0 +1,12 @@
+[
+  {
+    "ContainingType": "ManagerProWeb.Controllers.InfoController",
+    "Method": "Get",
+    "RelativePath": "api/Info",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]

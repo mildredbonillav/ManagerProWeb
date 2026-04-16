@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagerProWeb", "ManagerProWeb.csproj", "{DA069EB1-642A-5367-0A5C-877527A1F9DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DA069EB1-642A-5367-0A5C-877527A1F9DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA069EB1-642A-5367-0A5C-877527A1F9DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA069EB1-642A-5367-0A5C-877527A1F9DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA069EB1-642A-5367-0A5C-877527A1F9DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB8B83DB-BD7F-4585-8990-19BDBBEA3554}
+	EndGlobalSection
+EndGlobal

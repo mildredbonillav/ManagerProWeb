@@ -16,6 +16,7 @@ import {
   CaretDown,
   UserCircle,
   ShieldCheck,
+  Package,
 } from '@phosphor-icons/react'
 
 const menuItems = [
@@ -39,6 +40,8 @@ const menuItems = [
     items: [
       { label: 'Usuarios', icon: Users, ruta: '/admin/usuarios' },
       { label: 'Departamentos', icon: Buildings, ruta: '/admin/departamentos' },
+      { label: 'Clientes', icon: Buildings, ruta: '/admin/clientes' },
+      { label: 'Productos', icon: Package, ruta: '/admin/productos' },
       { label: 'Configuración', icon: Gear, ruta: '/admin/configuracion' },
       { label: 'Roles y permisos', icon: ShieldCheck, ruta: '/admin/roles' },
     ]

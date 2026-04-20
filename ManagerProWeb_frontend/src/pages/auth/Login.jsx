@@ -1,7 +1,43 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { EnvelopeSimple, LockSimple, Eye, EyeSlash } from '@phosphor-icons/react'
+import { EnvelopeSimple, LockSimple, Eye, EyeSlash, Info } from '@phosphor-icons/react'
+
+// Credenciales simuladas
+const cuentasSimuladas = [
+  {
+    correo: 'admin@managerpro.com',
+    contrasena: '123456',
+    datos: {
+      nombre: 'Mildred Bonilla',
+      correo: 'admin@managerpro.com',
+      rol: 'Administrador',
+    },
+    redireccion: '/dashboard',
+  },
+  {
+    correo: 'cliente@empresa.com',
+    contrasena: 'cliente123',
+    datos: {
+      nombre: 'Juan Pérez',
+      correo: 'cliente@empresa.com',
+      rol: 'Cliente',
+      empresa: 'Empresa ABC S.A.',
+      clienteId: 1,
+    },
+    redireccion: '/cliente/inicio',
+  },
+  {
+    correo: 'soporte@managerpro.com',
+    contrasena: '123456',
+    datos: {
+      nombre: 'Sofía Barboza',
+      correo: 'soporte@managerpro.com',
+      rol: 'Soporte',
+    },
+    redireccion: '/soporte',
+  },
+]
 
 export default function Login() {
   const [correo, setCorreo] = useState('')
@@ -9,6 +45,7 @@ export default function Login() {
   const [verContrasena, setVerContrasena] = useState(false)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [mostrarCreds, setMostrarCreds] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -18,14 +55,18 @@ export default function Login() {
     setCargando(true)
 
     setTimeout(() => {
-      if (correo === 'admin@managerpro.com' && contrasena === '123456') {
-        login({ nombre: 'Mildred Bonilla', correo, rol: 'Administrador' })
-        navigate('/dashboard')
+      const cuenta = cuentasSimuladas.find(
+        (c) => c.correo === correo && c.contrasena === contrasena
+      )
+
+      if (cuenta) {
+        login(cuenta.datos)
+        navigate(cuenta.redireccion)
       } else {
         setError('Correo o contraseña incorrectos.')
       }
       setCargando(false)
-    }, 800)
+    }, 700)
   }
 
   return (
@@ -50,7 +91,7 @@ export default function Login() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="h-px bg-slate-700"></div>
+          <div className="h-px bg-slate-700" />
           <p className="text-slate-500 text-sm">
             Gestión de proyectos · Control de tiempos · Soporte
           </p>
@@ -103,6 +144,7 @@ export default function Login() {
                 </label>
                 <button
                   type="button"
+                  onClick={() => navigate('/forgot-password')}
                   className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                 >
                   ¿Olvidaste tu contraseña?
@@ -149,7 +191,46 @@ export default function Login() {
 
           </form>
 
-          <p className="text-center text-xs text-slate-400 mt-8">
+          {/* Credenciales de prueba */}
+          <div className="mt-8 border border-slate-200 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setMostrarCreds(!mostrarCreds)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Info size={15} className="text-slate-400" />
+                <span className="text-xs font-medium text-slate-600">Cuentas de demostración</span>
+              </div>
+              <span className="text-xs text-slate-400">{mostrarCreds ? '▲ Ocultar' : '▼ Ver'}</span>
+            </button>
+
+            {mostrarCreds && (
+              <div className="divide-y divide-slate-100">
+                {cuentasSimuladas.map((c) => (
+                  <button
+                    key={c.correo}
+                    type="button"
+                    onClick={() => { setCorreo(c.correo); setContrasena(c.contrasena) }}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-slate-800">{c.datos.nombre}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 font-mono">{c.correo}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      c.datos.rol === 'Administrador' ? 'bg-blue-100 text-blue-700' :
+                      c.datos.rol === 'Cliente' ? 'bg-green-100 text-green-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {c.datos.rol}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-center text-xs text-slate-400 mt-6">
             Manager Pro © {new Date().getFullYear()} — BusinessPro
           </p>
         </div>

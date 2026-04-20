@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, ToggleLeft, ToggleRight, Buildings } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, ToggleLeft, ToggleRight, Buildings, ClockCounterClockwise, Star, X } from '@phosphor-icons/react'
 
 const departamentosSimulados = [
   {
@@ -28,6 +28,29 @@ const departamentosSimulados = [
   },
 ]
 
+const historialesSub = {
+  'Dirección ejecutiva': [
+    { id: 1, usuario: 'Sofía Barboza', fechaIngreso: '2023-01-01', fechaSalida: null, esLider: true },
+  ],
+  'Desarrollo web': [
+    { id: 2, usuario: 'Armando Núñez', fechaIngreso: '2023-02-01', fechaSalida: null, esLider: false },
+    { id: 3, usuario: 'Matías Vargas', fechaIngreso: '2023-03-15', fechaSalida: null, esLider: false },
+  ],
+  'QA': [
+    { id: 4, usuario: 'Mildred Bonilla', fechaIngreso: '2023-09-01', fechaSalida: '2024-03-01', esLider: false },
+  ],
+  'Coordinación': [
+    { id: 5, usuario: 'Mildred Bonilla', fechaIngreso: '2022-06-01', fechaSalida: null, esLider: true },
+  ],
+  'Logística': [],
+}
+
+const formatFecha = (f) => {
+  if (!f) return '—'
+  const [y, m, d] = f.split('-')
+  return `${d}/${m}/${y}`
+}
+
 export default function Departamentos() {
   const [departamentos, setDepartamentos] = useState(departamentosSimulados)
   const [busqueda, setBusqueda] = useState('')
@@ -37,6 +60,7 @@ export default function Departamentos() {
   const [editando, setEditando] = useState(null)
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
   const [form, setForm] = useState({ nombre: '', descripcion: '' })
+  const [modalHistorial, setModalHistorial] = useState({ abierto: false, subNombre: '', depto: '' })
 
   const deptosFiltrados = departamentos.filter((d) =>
     d.nombre.toLowerCase().includes(busqueda.toLowerCase())
@@ -227,6 +251,13 @@ export default function Departamentos() {
                           </span>
                           <div className="flex items-center gap-1">
                             <button
+                              onClick={() => setModalHistorial({ abierto: true, subNombre: s.nombre, depto: d.nombre })}
+                              className="p-2 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                              title="Historial de pertenencia"
+                            >
+                              <ClockCounterClockwise size={15} />
+                            </button>
+                            <button
                               onClick={() => abrirEditarSubdepto(d, s)}
                               className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
@@ -258,7 +289,79 @@ export default function Departamentos() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* ── Modal historial de subdepartamento ── */}
+      {modalHistorial.abierto && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[80vh] flex flex-col">
+
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Historial de pertenencia</h2>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  {modalHistorial.subNombre}
+                  <span className="text-slate-400"> · {modalHistorial.depto}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setModalHistorial({ abierto: false, subNombre: '', depto: '' })}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 px-6 py-4">
+              {(historialesSub[modalHistorial.subNombre] || []).length === 0 ? (
+                <div className="text-center py-14 text-slate-400 text-sm">
+                  Sin movimientos registrados para este subdepartamento.
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left text-xs font-medium text-slate-500 pb-3 pr-4">Usuario</th>
+                      <th className="text-left text-xs font-medium text-slate-500 pb-3 pr-4">Fecha de ingreso</th>
+                      <th className="text-left text-xs font-medium text-slate-500 pb-3 pr-4">Fecha de salida</th>
+                      <th className="text-left text-xs font-medium text-slate-500 pb-3">Rol</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {(historialesSub[modalHistorial.subNombre] || []).map((h) => (
+                      <tr key={h.id} className="hover:bg-slate-50/50">
+                        <td className="py-3 pr-4">
+                          <p className="text-sm font-medium text-slate-900">{h.usuario}</p>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <p className="text-xs text-slate-700">{formatFecha(h.fechaIngreso)}</p>
+                        </td>
+                        <td className="py-3 pr-4">
+                          {h.fechaSalida ? (
+                            <p className="text-xs text-slate-500">{formatFecha(h.fechaSalida)}</p>
+                          ) : (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Vigente</span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          {h.esLider ? (
+                            <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium w-fit">
+                              <Star size={10} weight="fill" /> Líder
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-500">Miembro</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Modal crear/editar */}
       {modalAbierto && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">

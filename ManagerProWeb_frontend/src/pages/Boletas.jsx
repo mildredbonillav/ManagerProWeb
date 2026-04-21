@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
   useSensor, useSensors,
@@ -9,32 +9,15 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Clock, Plus, CalendarBlank, ListBullets, CaretDown, CaretRight,
-  CaretLeft, ArrowUp, ArrowDown, MagnifyingGlass, FunnelSimple,
+  Clock, Plus, CalendarBlank, ListBullets, CaretLeft, CaretRight,
+  ArrowUp, ArrowDown, MagnifyingGlass, FunnelSimple,
   CheckCircle, Circle, ArrowClockwise, Warning, X, Paperclip,
-  ChatCircle, ArrowLeft, UploadSimple, DotsSixVertical, Eye,
-  CaretUpDown,
+  ChatCircle, ArrowLeft, DotsSixVertical, Eye,
+  CaretUpDown, CheckSquare, ThumbsUp, ThumbsDown,
 } from '@phosphor-icons/react'
+import { useBoletasCtx } from '../context/BoletasContext'
 
-// ─── Datos ────────────────────────────────────────────────────────
-const misSubtareasFlat = [
-  { id: 1, codigo: 'SUB-001', os: 'OS-001', osNombre: 'Plataforma e-commerce', tarea: 'Pantallas principales', nombre: 'Login y registro', estimado: 5, real: 4, estado: 'en_progreso', prioridad: 'alta', esCobrable: true },
-  { id: 2, codigo: 'SUB-002', os: 'OS-001', osNombre: 'Plataforma e-commerce', tarea: 'Pantallas principales', nombre: 'Home y catálogo', estimado: 5, real: 5, estado: 'finalizada', prioridad: 'media', esCobrable: true },
-  { id: 3, codigo: 'SUB-003', os: 'OS-001', osNombre: 'Plataforma e-commerce', tarea: 'Módulo de pagos', nombre: 'Integración pasarela', estimado: 10, real: 2, estado: 'en_progreso', prioridad: 'alta', esCobrable: true },
-  { id: 4, codigo: 'SUB-004', os: 'OS-001', osNombre: 'Plataforma e-commerce', tarea: 'Módulo de pagos', nombre: 'Pantalla confirmación', estimado: 4, real: 0, estado: 'pendiente', prioridad: 'media', esCobrable: true },
-  { id: 5, codigo: 'SUB-005', os: 'OS-003', osNombre: 'Incremento módulo reportes', tarea: 'Reportes de ventas', nombre: 'Diseño de vistas', estimado: 6, real: 1, estado: 'en_progreso', prioridad: 'baja', esCobrable: false },
-  { id: 6, codigo: 'SUB-006', os: 'OS-003', osNombre: 'Incremento módulo reportes', tarea: 'Reportes de ventas', nombre: 'Exportación PDF', estimado: 8, real: 0, estado: 'pendiente', prioridad: 'media', esCobrable: false },
-  { id: 7, codigo: 'SUB-007', os: 'OS-001', osNombre: 'Plataforma e-commerce', tarea: 'Módulo de pagos', nombre: 'Manejo de errores de pago', estimado: 3, real: 0, estado: 'pendiente', prioridad: 'alta', esCobrable: true },
-]
-
-const boletasData = [
-  { id: 1, subtareaId: 1, subtarea: 'Login y registro', orden: 'OS-001', fecha: '2026-04-10', horaInicio: '08:00', horaFin: '12:00', horas: 4, tipoLabor: 'Desarrollo / Frontend / Implementación', descripcion: 'Implementación del formulario de login', esCobrable: true, estado: 'registrada' },
-  { id: 2, subtareaId: 3, subtarea: 'Integración pasarela', orden: 'OS-001', fecha: '2026-04-10', horaInicio: '13:00', horaFin: '15:00', horas: 2, tipoLabor: 'Desarrollo / Backend / API REST', descripcion: 'Configuración inicial de Stripe', esCobrable: true, estado: 'registrada' },
-  { id: 3, subtareaId: 5, subtarea: 'Diseño de vistas', orden: 'OS-003', fecha: '2026-04-09', horaInicio: '09:00', horaFin: '11:00', horas: 2, tipoLabor: 'Desarrollo / Frontend / Diseño UI', descripcion: 'Mockups de reportes de ventas', esCobrable: false, estado: 'registrada' },
-  { id: 4, subtareaId: 1, subtarea: 'Login y registro', orden: 'OS-001', fecha: '2026-04-08', horaInicio: '08:00', horaFin: '10:00', horas: 2, tipoLabor: 'Desarrollo / Frontend / Implementación', descripcion: 'Validaciones del formulario', esCobrable: true, estado: 'registrada' },
-  { id: 5, subtareaId: 3, subtarea: 'Integración pasarela', orden: 'OS-001', fecha: '2026-04-07', horaInicio: '10:00', horaFin: '12:00', horas: 2, tipoLabor: 'Desarrollo / Backend / API REST', descripcion: 'Webhooks de confirmación', esCobrable: true, estado: 'borrador' },
-]
-
+// ─── Datos locales estáticos ───────────────────────────────────────
 const comentariosData = {
   1: [
     { id: 1, usuario: 'Sofía Barboza', fecha: '2026-04-09 14:30', comentario: 'Recordá incluir la validación de correo duplicado.' },
@@ -43,9 +26,38 @@ const comentariosData = {
   3: [{ id: 3, usuario: 'Mildred Bonilla', fecha: '2026-04-08 10:00', comentario: 'Verificar con el cliente qué pasarela prefieren.' }],
 }
 
-const adjuntosData = {
-  1: [{ id: 1, nombre: 'Diseño_login_v2.fig', descripcion: 'Diseño actualizado aprobado', fecha: '2026-04-08' }],
-  3: [{ id: 2, nombre: 'Documentacion_stripe.pdf', descripcion: 'Guía de integración', fecha: '2026-04-07' }],
+const adjuntosData = {}
+
+const CATEGORIAS = {
+  Desarrollo:    ['Frontend', 'Backend', 'Móvil', 'Base de datos', 'DevOps'],
+  Soporte:       ['Nivel 1', 'Nivel 2', 'Nivel 3'],
+  Reunión:       ['Con cliente', 'Interna', 'Seguimiento'],
+  Análisis:      ['Requerimientos', 'Impacto', 'Calidad'],
+  Documentación: ['Técnica', 'Usuario', 'Procesos'],
+  Diseño:        ['UI/UX', 'Arquitectura', 'Prototipos'],
+}
+
+const TIPOS_LABOR = {
+  Frontend:       ['Implementación', 'Corrección de bugs', 'Optimización', 'Pruebas'],
+  Backend:        ['API REST', 'Lógica de negocio', 'Migraciones', 'Pruebas'],
+  Móvil:          ['Implementación', 'Pruebas', 'Publicación'],
+  'Base de datos':['Modelado', 'Migración', 'Optimización de queries'],
+  DevOps:         ['CI/CD', 'Infraestructura', 'Despliegue'],
+  'Nivel 1':      ['Atención', 'Escalamiento'],
+  'Nivel 2':      ['Diagnóstico', 'Resolución'],
+  'Nivel 3':      ['Resolución avanzada', 'Documentación'],
+  'Con cliente':  ['Presentación', 'Levantamiento'],
+  Interna:        ['Planificación', 'Revisión'],
+  Seguimiento:    ['Estado de avance'],
+  Requerimientos: ['Levantamiento', 'Validación'],
+  Impacto:        ['Análisis'],
+  Calidad:        ['Revisión de código', 'Pruebas QA'],
+  Técnica:        ['Redacción', 'Revisión'],
+  Usuario:        ['Manuales', 'Videos'],
+  Procesos:       ['Mapeo', 'Documentación'],
+  'UI/UX':        ['Wireframes', 'Prototipos', 'Diseño final'],
+  Arquitectura:   ['Diagramas', 'Revisión'],
+  Prototipos:     ['Figma', 'InVision'],
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -85,26 +97,33 @@ function formatFecha(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-// ─── Columnas definición ──────────────────────────────────────────
+function boletaFormVacio(subtarea) {
+  return {
+    fecha: formatFecha(new Date()),
+    horaInicio: '', horaFin: '',
+    categoria: '', subcategoria: '', tipoLabor: '',
+    descripcion: '', esCobrable: subtarea?.esCobrable ?? true,
+  }
+}
+
+// ─── Columnas ─────────────────────────────────────────────────────
 const COLUMNAS_DEFAULT = [
-  { id: 'codigo',    label: '#',           visible: true,  width: 90 },
-  { id: 'os',        label: 'OS',          visible: true,  width: 90 },
-  { id: 'tarea',     label: 'Tarea',       visible: true,  width: 160 },
-  { id: 'nombre',    label: 'Subtarea',    visible: true,  width: 200 },
-  { id: 'estimado',  label: 'Estimado',    visible: true,  width: 90 },
-  { id: 'real',      label: 'Registrado',  visible: true,  width: 100 },
-  { id: 'restante',  label: 'Restante',    visible: true,  width: 90 },
-  { id: 'progreso',  label: 'Progreso',    visible: true,  width: 130 },
-  { id: 'estado',    label: 'Estado',      visible: true,  width: 120 },
-  { id: 'prioridad', label: 'Prioridad',   visible: true,  width: 100 },
-  { id: 'cobrable',  label: 'Cobrable',    visible: false, width: 90 },
+  { id: 'codigo',    label: '#',          visible: true,  width: 90 },
+  { id: 'os',        label: 'OS',         visible: true,  width: 90 },
+  { id: 'tarea',     label: 'Tarea',      visible: true,  width: 160 },
+  { id: 'nombre',    label: 'Subtarea',   visible: true,  width: 200 },
+  { id: 'estimado',  label: 'Estimado',   visible: true,  width: 90 },
+  { id: 'real',      label: 'Registrado', visible: true,  width: 100 },
+  { id: 'restante',  label: 'Restante',   visible: true,  width: 90 },
+  { id: 'progreso',  label: 'Progreso',   visible: true,  width: 130 },
+  { id: 'estado',    label: 'Estado',     visible: true,  width: 120 },
+  { id: 'prioridad', label: 'Prioridad',  visible: true,  width: 100 },
+  { id: 'cobrable',  label: 'Cobrable',   visible: false, width: 90 },
 ]
 
-// ─── Columna sortable ─────────────────────────────────────────────
 function ColHeader({ col, ordenCol, ordenDir, onOrdenar }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, width: col.width, minWidth: col.width }
-
   return (
     <th ref={setNodeRef} style={style}
       className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide select-none bg-slate-50 border-b border-slate-200 whitespace-nowrap">
@@ -123,7 +142,6 @@ function ColHeader({ col, ordenCol, ordenDir, onOrdenar }) {
   )
 }
 
-// ─── Selector de columnas ─────────────────────────────────────────
 function SelectorColumnas({ columnas, onChange }) {
   const [abierto, setAbierto] = useState(false)
   return (
@@ -137,11 +155,9 @@ function SelectorColumnas({ columnas, onChange }) {
           <div className="fixed inset-0 z-10" onClick={() => setAbierto(false)} />
           <div className="absolute right-0 top-9 z-20 bg-white border border-slate-200 rounded-xl shadow-lg p-3 w-48 flex flex-col gap-1">
             <p className="text-xs font-semibold text-slate-500 mb-1 px-1">Mostrar columnas</p>
-            {columnas.map((col) => (
+            {columnas.map(col => (
               <label key={col.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <input type="checkbox" checked={col.visible}
-                  onChange={() => onChange(col.id)}
-                  className="w-3.5 h-3.5 accent-blue-600" />
+                <input type="checkbox" checked={col.visible} onChange={() => onChange(col.id)} className="w-3.5 h-3.5 accent-blue-600" />
                 <span className="text-xs text-slate-700">{col.label}</span>
               </label>
             ))}
@@ -152,7 +168,6 @@ function SelectorColumnas({ columnas, onChange }) {
   )
 }
 
-// ─── Tabla configurable ───────────────────────────────────────────
 function TablaSubtareas({ subtareas, onVerDetalle }) {
   const [columnas, setColumnas] = useState(COLUMNAS_DEFAULT)
   const [ordenCol, setOrdenCol] = useState('codigo')
@@ -164,19 +179,13 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
   )
 
   const colsVisibles = columnas.filter(c => c.visible)
+  const toggleColumna = (id) => setColumnas(cols => cols.map(c => c.id === id ? { ...c, visible: !c.visible } : c))
 
-  const toggleColumna = (id) => {
-    setColumnas(cols => cols.map(c => c.id === id ? { ...c, visible: !c.visible } : c))
-  }
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event
+  const handleDragEnd = ({ active, over }) => {
     if (!over || active.id === over.id) return
     const oldIdx = colsVisibles.findIndex(c => c.id === active.id)
     const newIdx = colsVisibles.findIndex(c => c.id === over.id)
-    const reordenadas = arrayMove(colsVisibles, oldIdx, newIdx)
-    const invisibles = columnas.filter(c => !c.visible)
-    setColumnas([...reordenadas, ...invisibles])
+    setColumnas([...arrayMove(colsVisibles, oldIdx, newIdx), ...columnas.filter(c => !c.visible)])
   }
 
   const handleOrdenar = (colId) => {
@@ -185,8 +194,7 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
   }
 
   const subtareasOrdenadas = [...subtareas].sort((a, b) => {
-    let va = a[ordenCol] ?? ''
-    let vb = b[ordenCol] ?? ''
+    let va = a[ordenCol] ?? '', vb = b[ordenCol] ?? ''
     if (typeof va === 'string') va = va.toLowerCase()
     if (typeof vb === 'string') vb = vb.toLowerCase()
     if (va < vb) return ordenDir === 'asc' ? -1 : 1
@@ -198,23 +206,23 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
     const restante = Math.max(0, sub.estimado - sub.real)
     const pct = Math.min(100, Math.round((sub.real / sub.estimado) * 100))
     switch (col.id) {
-      case 'codigo': return <span className="text-xs font-mono text-slate-500">{sub.codigo}</span>
-      case 'os': return <span className="text-xs font-medium text-blue-600">{sub.os}</span>
-      case 'tarea': return <span className="text-xs text-slate-500 truncate block max-w-[150px]">{sub.tarea}</span>
-      case 'nombre': return (
+      case 'codigo':    return <span className="text-xs font-mono text-slate-500">{sub.codigo}</span>
+      case 'os':        return <span className="text-xs font-medium text-blue-600">{sub.os}</span>
+      case 'tarea':     return <span className="text-xs text-slate-500 truncate block max-w-[150px]">{sub.tarea}</span>
+      case 'nombre':    return (
         <div className="flex items-center gap-2">
           {estadoIcono(sub.estado, 12)}
           <span className="text-sm font-medium text-slate-900 truncate max-w-[180px]">{sub.nombre}</span>
         </div>
       )
-      case 'estimado': return <span className="text-xs text-slate-600">{sub.estimado}h</span>
-      case 'real': return <span className="text-xs text-slate-600">{sub.real}h</span>
-      case 'restante': return (
+      case 'estimado':  return <span className="text-xs text-slate-600">{sub.estimado}h</span>
+      case 'real':      return <span className="text-xs text-slate-600">{sub.real}h</span>
+      case 'restante':  return (
         <span className={`text-xs font-medium ${restante === 0 ? 'text-red-500' : 'text-slate-700'}`}>
           {restante > 0 ? `${restante}h` : '—'}
         </span>
       )
-      case 'progreso': return (
+      case 'progreso':  return (
         <div className="flex items-center gap-2 min-w-[110px]">
           <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${pct >= 100 ? 'bg-red-400' : pct >= 80 ? 'bg-amber-400' : 'bg-blue-400'}`}
@@ -223,20 +231,14 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
           <span className="text-xs text-slate-500 shrink-0">{pct}%</span>
         </div>
       )
-      case 'estado': return (
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoBadge[sub.estado]}`}>
-          {estadoLabel[sub.estado]}
-        </span>
+      case 'estado':    return (
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoBadge[sub.estado]}`}>{estadoLabel[sub.estado]}</span>
       )
       case 'prioridad': return (
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${prioridadClase[sub.prioridad]}`}>
-          {sub.prioridad}
-        </span>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${prioridadClase[sub.prioridad]}`}>{sub.prioridad}</span>
       )
-      case 'cobrable': return (
-        <span className={`text-xs ${sub.esCobrable ? 'text-green-600' : 'text-slate-400'}`}>
-          {sub.esCobrable ? 'Sí' : 'No'}
-        </span>
+      case 'cobrable':  return (
+        <span className={`text-xs ${sub.esCobrable ? 'text-green-600' : 'text-slate-400'}`}>{sub.esCobrable ? 'Sí' : 'No'}</span>
       )
       default: return null
     }
@@ -258,15 +260,12 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
                     <ColHeader key={col.id} col={col} ordenCol={ordenCol} ordenDir={ordenDir} onOrdenar={handleOrdenar} />
                   ))}
                 </SortableContext>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 border-b border-slate-200 w-20">
-                  Acciones
-                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 border-b border-slate-200 w-24">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {subtareasOrdenadas.map((sub) => (
-                <tr key={sub.id}
-                  onClick={() => onVerDetalle(sub)}
+              {subtareasOrdenadas.map(sub => (
+                <tr key={sub.id} onClick={() => onVerDetalle(sub)}
                   className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                   {colsVisibles.map(col => (
                     <td key={col.id} className="px-3 py-3 whitespace-nowrap" style={{ width: col.width }}>
@@ -274,9 +273,9 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
                     </td>
                   ))}
                   <td className="px-3 py-3">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onVerDetalle(sub) }}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Acciones visibles solo en hover */}
+                    <button onClick={e => { e.stopPropagation(); onVerDetalle(sub) }}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                       Ver detalle →
                     </button>
                   </td>
@@ -290,33 +289,150 @@ function TablaSubtareas({ subtareas, onVerDetalle }) {
   )
 }
 
-// ─── Vista detalle subtarea ───────────────────────────────────────
-function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
+// ─── Campos de boleta reutilizables ───────────────────────────────
+function CamposBoleta({ form, setForm }) {
+  const subcats = CATEGORIAS[form.categoria] || []
+  const tipos = TIPOS_LABOR[form.subcategoria] || []
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-700">Categoría</label>
+          <select value={form.categoria}
+            onChange={e => setForm(f => ({ ...f, categoria: e.target.value, subcategoria: '', tipoLabor: '' }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            <option value="">Seleccionar...</option>
+            {Object.keys(CATEGORIAS).map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-700">Subcategoría</label>
+          <select value={form.subcategoria} disabled={!form.categoria}
+            onChange={e => setForm(f => ({ ...f, subcategoria: e.target.value, tipoLabor: '' }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50">
+            <option value="">Seleccionar...</option>
+            {subcats.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium text-slate-700">Tipo de labor</label>
+        <select value={form.tipoLabor} disabled={!form.subcategoria}
+          onChange={e => setForm(f => ({ ...f, tipoLabor: e.target.value }))}
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50">
+          <option value="">Seleccionar...</option>
+          {tipos.map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium text-slate-700">Descripción detallada</label>
+        <textarea value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+          rows={3} placeholder="Describí con detalle las labores realizadas..."
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-700">Fecha</label>
+          <input type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-700">Hora inicio</label>
+          <input type="time" value={form.horaInicio} onChange={e => setForm(f => ({ ...f, horaInicio: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-700">Hora fin</label>
+          <input type="time" value={form.horaFin} onChange={e => setForm(f => ({ ...f, horaFin: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+      {form.horaInicio && form.horaFin && calcularHoras(form.horaInicio, form.horaFin) > 0 && (
+        <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2.5">
+          <Clock size={15} className="text-blue-600" />
+          <span className="text-sm text-blue-700 font-semibold">Total: {calcularHoras(form.horaInicio, form.horaFin)}h</span>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <input type="checkbox" id="cob_boleta" checked={form.esCobrable}
+            onChange={e => setForm(f => ({ ...f, esCobrable: e.target.checked }))}
+            className="w-4 h-4 accent-blue-600" />
+          <label htmlFor="cob_boleta" className="text-sm text-slate-700">Es cobrable</label>
+        </div>
+        <button type="button"
+          className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 hover:bg-slate-50 transition-colors">
+          <Paperclip size={13} /> Adjuntar archivo
+        </button>
+      </div>
+    </>
+  )
+}
+
+// ─── Modal genérico ───────────────────────────────────────────────
+function Modal({ titulo, subtitulo, ancho = 'max-w-lg', onClose, children, footer }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className={`bg-white rounded-2xl shadow-xl w-full ${ancho} max-h-[90vh] flex flex-col`}>
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">{titulo}</h2>
+            {subtitulo && <p className="text-xs text-slate-500 mt-0.5">{subtitulo}</p>}
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
+        </div>
+        <div className="px-6 py-5 overflow-y-auto flex-1 flex flex-col gap-4">{children}</div>
+        {footer && <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">{footer}</div>}
+      </div>
+    </div>
+  )
+}
+
+// ─── SubtareaDetalle ──────────────────────────────────────────────
+function SubtareaDetalle({ subtareaId, onVolver }) {
+  const { subtareas, boletas, agregarBoleta, finalizarSubtarea, agregarSolicitudIncremento } = useBoletasCtx()
+  const subtarea = subtareas.find(s => s.id === subtareaId)
+
   const [tabActiva, setTabActiva] = useState('boletas')
-  const [comentarios, setComentarios] = useState(comentariosData[subtarea.id] || [])
-  const [adjuntos] = useState(adjuntosData[subtarea.id] || [])
+  const [comentarios, setComentarios] = useState(comentariosData[subtareaId] || [])
+  const [adjuntos] = useState(adjuntosData[subtareaId] || [])
   const [modalBoleta, setModalBoleta] = useState(false)
   const [modalTiempo, setModalTiempo] = useState(false)
-  const [modalTarea, setModalTarea] = useState(false)
+  const [modalFinalizar, setModalFinalizar] = useState(false)
   const [nuevoComentario, setNuevoComentario] = useState('')
-  const [form, setForm] = useState({ fecha: formatFecha(new Date()), horaInicio: '', horaFin: '', tipoLabor: '', descripcion: '', esCobrable: subtarea.esCobrable })
-  const [formTiempo, setFormTiempo] = useState({ horasAdicionales: '', causa: '', justificacion: '' })
-  const [formTarea, setFormTarea] = useState({ nombre: '', descripcion: '', estimacion: '', causa: '', justificacion: '' })
+  const [formBoleta, setFormBoleta] = useState(boletaFormVacio(subtarea))
+  const [formIncremento, setFormIncremento] = useState({
+    horasAdicionales: '', causa: '', justificacion: '',
+    fecha: formatFecha(new Date()), horaInicio: '', horaFin: '',
+    categoria: '', subcategoria: '', tipoLabor: '', descripcion: '', esCobrable: true,
+  })
+
+  if (!subtarea) return null
 
   const boletasSub = boletas.filter(b => b.subtareaId === subtarea.id)
   const totalHoras = boletasSub.reduce((a, b) => a + b.horas, 0)
   const restante = Math.max(0, subtarea.estimado - subtarea.real)
   const pct = Math.min(100, Math.round((subtarea.real / subtarea.estimado) * 100))
 
-  const guardarBoleta = (esBorrador = false) => {
-    if (!form.fecha || !form.horaInicio || !form.horaFin) return
-    const horas = calcularHoras(form.horaInicio, form.horaFin)
-    setBoletas(prev => [...prev, {
-      id: Date.now(), subtareaId: subtarea.id, subtarea: subtarea.nombre,
-      orden: subtarea.os, ...form, horas, estado: esBorrador ? 'borrador' : 'registrada',
-    }])
+  const guardarBoleta = (esBorrador) => {
+    if (!formBoleta.fecha || !formBoleta.horaInicio || !formBoleta.horaFin) return
+    const horas = calcularHoras(formBoleta.horaInicio, formBoleta.horaFin)
+    agregarBoleta({ subtareaId: subtarea.id, subtarea: subtarea.nombre, orden: subtarea.os, ...formBoleta, horas, estado: esBorrador ? 'borrador' : 'registrada' })
     setModalBoleta(false)
-    setForm({ fecha: formatFecha(new Date()), horaInicio: '', horaFin: '', tipoLabor: '', descripcion: '', esCobrable: subtarea.esCobrable })
+    setFormBoleta(boletaFormVacio(subtarea))
+  }
+
+  const enviarSolicitudTiempo = () => {
+    if (!formIncremento.horasAdicionales || !formIncremento.causa) return
+    const { horasAdicionales, causa, justificacion, ...boletaForm } = formIncremento
+    agregarSolicitudIncremento({
+      subtareaId: subtarea.id, subtareaNombre: subtarea.nombre, os: subtarea.os, recurso: 'Sofía Barboza',
+      horasAdicionales, causa, justificacion,
+      boletaForm,
+    })
+    setModalTiempo(false)
+    setFormIncremento({ horasAdicionales: '', causa: '', justificacion: '', fecha: formatFecha(new Date()), horaInicio: '', horaFin: '', categoria: '', subcategoria: '', tipoLabor: '', descripcion: '', esCobrable: true })
   }
 
   const agregarComentario = () => {
@@ -331,7 +447,6 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
         <ArrowLeft size={16} /> Volver a mis boletas
       </button>
 
-      {/* Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
@@ -351,22 +466,22 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
               {!subtarea.esCobrable && <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-500">No cobrable</span>}
             </div>
           </div>
-          <div className="flex gap-2 shrink-0 flex-wrap justify-end">
-            <button onClick={() => setModalTiempo(true)}
-              className="flex items-center gap-1.5 border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-medium px-3 py-2 rounded-lg transition-colors">
-              <ArrowClockwise size={13} /> Solicitar tiempo
-            </button>
-            <button onClick={() => setModalTarea(true)}
-              className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium px-3 py-2 rounded-lg transition-colors">
-              <Plus size={13} /> Solicitar tarea
-            </button>
-            {subtarea.estado !== 'finalizada' && (
+          {subtarea.estado !== 'finalizada' && (
+            <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+              <button onClick={() => setModalTiempo(true)}
+                className="flex items-center gap-1.5 border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+                <ArrowClockwise size={13} /> Solicitar tiempo
+              </button>
               <button onClick={() => setModalBoleta(true)}
                 className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors">
                 <Plus size={13} /> Registrar boleta
               </button>
-            )}
-          </div>
+              <button onClick={() => setModalFinalizar(true)}
+                className="flex items-center gap-1.5 border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+                <CheckSquare size={13} /> Finalizar
+              </button>
+            </div>
+          )}
         </div>
         <div>
           <div className="flex items-center justify-between mb-1.5">
@@ -389,9 +504,9 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200">
         {[
-          { id: 'boletas', label: 'Boletas', count: boletasSub.length },
+          { id: 'boletas',     label: 'Boletas',     count: boletasSub.length },
           { id: 'comentarios', label: 'Comentarios', count: comentarios.length },
-          { id: 'adjuntos', label: 'Adjuntos', count: adjuntos.length },
+          { id: 'adjuntos',    label: 'Adjuntos',    count: adjuntos.length },
         ].map(tab => (
           <button key={tab.id} onClick={() => setTabActiva(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${tabActiva === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
@@ -401,23 +516,26 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
         ))}
       </div>
 
-      {/* Tab boletas */}
       {tabActiva === 'boletas' && (
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
             <p className="text-sm font-medium text-slate-900">Boletas registradas</p>
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-400">Total: <span className="font-semibold text-slate-700">{totalHoras}h</span></span>
-              <button onClick={() => setModalBoleta(true)} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                <Plus size={13} /> Nueva
-              </button>
+              {subtarea.estado !== 'finalizada' && (
+                <button onClick={() => setModalBoleta(true)} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium">
+                  <Plus size={13} /> Nueva
+                </button>
+              )}
             </div>
           </div>
           {boletasSub.length === 0 ? (
             <div className="px-6 py-10 text-center">
               <Clock size={28} className="text-slate-200 mx-auto mb-2" />
               <p className="text-sm text-slate-400">No hay boletas para esta subtarea.</p>
-              <button onClick={() => setModalBoleta(true)} className="mt-2 text-xs text-blue-600 font-medium">Registrar la primera</button>
+              {subtarea.estado !== 'finalizada' && (
+                <button onClick={() => setModalBoleta(true)} className="mt-2 text-xs text-blue-600 font-medium">Registrar la primera</button>
+              )}
             </div>
           ) : boletasSub.map(b => (
             <div key={b.id} className="flex items-center gap-4 px-5 py-4 border-b border-slate-100 last:border-0">
@@ -425,8 +543,9 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
                 <Clock size={15} className="text-violet-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-medium text-slate-900">{b.tipoLabor || '—'}</span>
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="text-sm font-medium text-slate-900">{b.categoria}{b.subcategoria ? ` / ${b.subcategoria}` : ''}</span>
+                  {b.tipoLabor && <span className="text-xs text-slate-400">{b.tipoLabor}</span>}
                   {b.estado === 'borrador' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Borrador</span>}
                   {!b.esCobrable && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">No cobrable</span>}
                 </div>
@@ -445,7 +564,6 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
         </div>
       )}
 
-      {/* Tab comentarios */}
       {tabActiva === 'comentarios' && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4">
           {comentarios.length === 0
@@ -475,12 +593,11 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
         </div>
       )}
 
-      {/* Tab adjuntos */}
       {tabActiva === 'adjuntos' && (
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
             <p className="text-sm font-medium text-slate-900">Archivos adjuntos</p>
-            <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium"><UploadSimple size={13} /> Subir</button>
+            <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium"><Paperclip size={13} /> Adjuntar</button>
           </div>
           {adjuntos.length === 0
             ? <div className="px-6 py-10 text-center"><Paperclip size={28} className="text-slate-200 mx-auto mb-2" /><p className="text-sm text-slate-400">Sin archivos adjuntos.</p></div>
@@ -497,94 +614,49 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
         </div>
       )}
 
-      {/* Modal boleta */}
+      {/* Modal registrar boleta */}
       {modalBoleta && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Registrar boleta</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{subtarea.codigo} · {subtarea.nombre}</p>
-              </div>
-              <button onClick={() => setModalBoleta(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
-            </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Tipo de labor</label>
-                <select value={form.tipoLabor} onChange={e => setForm({ ...form, tipoLabor: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                  <option value="">Seleccionar...</option>
-                  <option>Desarrollo / Frontend / Diseño UI</option>
-                  <option>Desarrollo / Frontend / Implementación</option>
-                  <option>Desarrollo / Backend / API REST</option>
-                  <option>Soporte / Incidencias / Nivel 1</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Descripción</label>
-                <textarea value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })}
-                  rows={2} placeholder="Describí las labores realizadas..."
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Fecha</label>
-                  <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Hora inicio</label>
-                  <input type="time" value={form.horaInicio} onChange={e => setForm({ ...form, horaInicio: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Hora fin</label>
-                  <input type="time" value={form.horaFin} onChange={e => setForm({ ...form, horaFin: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-              {form.horaInicio && form.horaFin && calcularHoras(form.horaInicio, form.horaFin) > 0 && (
-                <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2.5">
-                  <Clock size={15} className="text-blue-600" />
-                  <span className="text-sm text-blue-700 font-semibold">Total: {calcularHoras(form.horaInicio, form.horaFin)}h</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="cob" checked={form.esCobrable} onChange={e => setForm({ ...form, esCobrable: e.target.checked })} className="w-4 h-4 accent-blue-600" />
-                <label htmlFor="cob" className="text-sm text-slate-700">Es cobrable</label>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+        <Modal titulo="Registrar boleta" subtitulo={`${subtarea.codigo} · ${subtarea.nombre}`} onClose={() => setModalBoleta(false)}
+          footer={
+            <>
               <button onClick={() => setModalBoleta(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-              <button onClick={() => guardarBoleta(true)} className="px-4 py-2 rounded-lg text-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">Borrador</button>
+              <button onClick={() => guardarBoleta(true)} className="px-4 py-2 rounded-lg text-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">Guardar borrador</button>
               <button onClick={() => guardarBoleta(false)} className="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">Registrar</button>
-            </div>
-          </div>
-        </div>
+            </>
+          }>
+          <CamposBoleta form={formBoleta} setForm={setFormBoleta} />
+        </Modal>
       )}
 
-      {/* Modal solicitar tiempo */}
+      {/* Modal solicitar incremento de tiempo */}
       {modalTiempo && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Solicitar incremento de tiempo</h2>
-              <button onClick={() => setModalTiempo(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
-            </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <Warning size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800">Debe ser aprobada por tu responsable. Podés guardar la boleta en borrador mientras tanto.</p>
-              </div>
+        <Modal titulo="Solicitar incremento de tiempo" subtitulo={`${subtarea.codigo} · ${subtarea.nombre}`} ancho="max-w-2xl" onClose={() => setModalTiempo(false)}
+          footer={
+            <>
+              <button onClick={() => setModalTiempo(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+              <button onClick={enviarSolicitudTiempo} className="px-4 py-2 rounded-lg text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors">Enviar solicitud</button>
+            </>
+          }>
+
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <Warning size={16} className="text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800">La boleta quedará en estado <strong>borrador</strong> hasta que la solicitud sea aprobada. Al aprobarse, se registrará automáticamente.</p>
+          </div>
+
+          {/* Datos del incremento */}
+          <div className="bg-slate-50 rounded-xl p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Datos del incremento</p>
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-700">Horas adicionales</label>
-                <input type="number" min="0.5" step="0.5" value={formTiempo.horasAdicionales}
-                  onChange={e => setFormTiempo({ ...formTiempo, horasAdicionales: e.target.value })}
-                  placeholder="Ej: 4" className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="number" min="0.5" step="0.5" value={formIncremento.horasAdicionales}
+                  onChange={e => setFormIncremento(f => ({ ...f, horasAdicionales: e.target.value }))}
+                  placeholder="Ej: 4" className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-700">Causa</label>
-                <select value={formTiempo.causa} onChange={e => setFormTiempo({ ...formTiempo, causa: e.target.value })}
+                <select value={formIncremento.causa}
+                  onChange={e => setFormIncremento(f => ({ ...f, causa: e.target.value }))}
                   className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                   <option value="">Seleccionar...</option>
                   <option>Estimación incorrecta</option>
@@ -594,72 +666,63 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
                   <option>Otro</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Justificación</label>
-                <textarea value={formTiempo.justificacion} onChange={e => setFormTiempo({ ...formTiempo, justificacion: e.target.value })}
-                  rows={3} placeholder="Explicá por qué se necesitan más horas..."
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setModalTiempo(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-              <button onClick={() => setModalTiempo(false)} className="px-4 py-2 rounded-lg text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors">Enviar solicitud</button>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-slate-700">Justificación</label>
+              <textarea value={formIncremento.justificacion}
+                onChange={e => setFormIncremento(f => ({ ...f, justificacion: e.target.value }))}
+                rows={2} placeholder="Explicá por qué se necesitan más horas..."
+                className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white" />
             </div>
           </div>
-        </div>
+
+          {/* Datos de la boleta borrador */}
+          <div className="bg-slate-50 rounded-xl p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Datos de la boleta (borrador)</p>
+            <CamposBoleta
+              form={{ fecha: formIncremento.fecha, horaInicio: formIncremento.horaInicio, horaFin: formIncremento.horaFin, categoria: formIncremento.categoria, subcategoria: formIncremento.subcategoria, tipoLabor: formIncremento.tipoLabor, descripcion: formIncremento.descripcion, esCobrable: formIncremento.esCobrable }}
+              setForm={(updater) => setFormIncremento(f => {
+                const parcial = typeof updater === 'function'
+                  ? updater({ fecha: f.fecha, horaInicio: f.horaInicio, horaFin: f.horaFin, categoria: f.categoria, subcategoria: f.subcategoria, tipoLabor: f.tipoLabor, descripcion: f.descripcion, esCobrable: f.esCobrable })
+                  : updater
+                return { ...f, ...parcial }
+              })}
+            />
+          </div>
+        </Modal>
       )}
 
-      {/* Modal solicitar tarea */}
-      {modalTarea && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Solicitar nueva tarea</h2>
-              <button onClick={() => setModalTarea(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
-            </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Nombre de la tarea</label>
-                <input type="text" value={formTarea.nombre} onChange={e => setFormTarea({ ...formTarea, nombre: e.target.value })}
-                  placeholder="Ej: Implementar notificaciones" className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Descripción</label>
-                <textarea value={formTarea.descripcion} onChange={e => setFormTarea({ ...formTarea, descripcion: e.target.value })}
-                  rows={2} placeholder="Describí la tarea..."
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Estimación (horas)</label>
-                  <input type="number" min="1" value={formTarea.estimacion} onChange={e => setFormTarea({ ...formTarea, estimacion: e.target.value })}
-                    placeholder="Ej: 8" className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Causa</label>
-                  <select value={formTarea.causa} onChange={e => setFormTarea({ ...formTarea, causa: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="">Seleccionar...</option>
-                    <option>Alcance no contemplado</option>
-                    <option>Solicitud del cliente</option>
-                    <option>Mejora identificada</option>
-                    <option>Otro</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Justificación</label>
-                <textarea value={formTarea.justificacion} onChange={e => setFormTarea({ ...formTarea, justificacion: e.target.value })}
-                  rows={2} placeholder="Explicá por qué es necesaria..."
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setModalTarea(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-              <button onClick={() => setModalTarea(false)} className="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">Enviar solicitud</button>
+      {/* Modal finalizar subtarea */}
+      {modalFinalizar && (
+        <Modal titulo="Finalizar subtarea" onClose={() => setModalFinalizar(false)}
+          footer={
+            <>
+              <button onClick={() => setModalFinalizar(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+              <button onClick={() => { finalizarSubtarea(subtarea.id); setModalFinalizar(false); onVolver() }}
+                className="px-4 py-2 rounded-lg text-sm bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
+                Confirmar finalización
+              </button>
+            </>
+          }>
+          <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
+            <CheckCircle size={16} className="text-green-600 shrink-0 mt-0.5" weight="fill" />
+            <div>
+              <p className="text-sm font-medium text-green-800">¿Confirmar finalización?</p>
+              <p className="text-xs text-green-700 mt-1">La subtarea <strong>{subtarea.nombre}</strong> quedará como finalizada. No se podrán registrar más boletas.</p>
             </div>
           </div>
-        </div>
+          <div className="bg-slate-50 rounded-xl p-4 flex flex-col gap-2">
+            <div className="flex justify-between text-xs text-slate-600">
+              <span>Horas estimadas</span><span className="font-semibold">{subtarea.estimado}h</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-600">
+              <span>Horas registradas</span><span className="font-semibold">{subtarea.real}h</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-600">
+              <span>Boletas registradas</span><span className="font-semibold">{boletasSub.length}</span>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
@@ -667,29 +730,29 @@ function SubtareaDetalle({ subtarea, boletas, setBoletas, onVolver }) {
 
 // ─── Componente principal ─────────────────────────────────────────
 export default function Boletas() {
-  const [boletas, setBoletas] = useState(boletasData)
+  const { subtareas, boletas, agregarSolicitudNuevaTarea } = useBoletasCtx()
   const [tabActiva, setTabActiva] = useState('subtareas')
   const [vistaActiva, setVistaActiva] = useState('lista')
   const [periodoActivo, setPeriodoActivo] = useState('semana')
-  const [subtareaDetalle, setSubtareaDetalle] = useState(null)
+  const [subtareaDetalleId, setSubtareaDetalleId] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtroOS, setFiltroOS] = useState('Todos')
   const [filtroEstado, setFiltroEstado] = useState('Todos')
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todos')
   const [semana] = useState(semanaDeHoy())
-  const [modalBoleta, setModalBoleta] = useState(false)
-  const [form, setForm] = useState({ fecha: formatFecha(new Date()), horaInicio: '', horaFin: '', tipoLabor: '', descripcion: '', esCobrable: true, orden: '', subtareaId: '' })
+  const [modalNuevaTarea, setModalNuevaTarea] = useState(false)
+  const [formTarea, setFormTarea] = useState({ os: '', osNombre: '', nombre: '', descripcion: '', estimacion: '', causa: '', justificacion: '' })
 
   const hoy = formatFecha(new Date())
-
   const horasHoy = boletas.filter(b => b.fecha === hoy).reduce((a, b) => a + b.horas, 0)
   const horasSemana = boletas.filter(b => semana.some(d => formatFecha(d) === b.fecha)).reduce((a, b) => a + b.horas, 0)
   const horasMes = boletas.filter(b => b.fecha.startsWith('2026-04')).reduce((a, b) => a + b.horas, 0)
-  const tiempoRestante = misSubtareasFlat.filter(s => s.estado !== 'finalizada').reduce((a, s) => a + Math.max(0, s.estimado - s.real), 0)
+  const tiempoRestante = subtareas.filter(s => s.estado !== 'finalizada').reduce((a, s) => a + Math.max(0, s.estimado - s.real), 0)
+  const osUnicas = [...new Set(subtareas.map(s => s.os))]
+  const osOpciones = [...new Set(subtareas.map(s => ({ os: s.os, nombre: s.osNombre })))]
+    .filter((v, i, a) => a.findIndex(x => x.os === v.os) === i)
 
-  const osUnicas = [...new Set(misSubtareasFlat.map(s => s.os))]
-
-  const subtareasFiltradas = misSubtareasFlat.filter(s => {
+  const subtareasFiltradas = subtareas.filter(s => {
     const matchBusqueda = `${s.codigo} ${s.nombre} ${s.tarea} ${s.os} ${s.osNombre}`.toLowerCase().includes(busqueda.toLowerCase())
     const matchOS = filtroOS === 'Todos' || s.os === filtroOS
     const matchEstado = filtroEstado === 'Todos' || s.estado === filtroEstado
@@ -703,55 +766,52 @@ export default function Boletas() {
     return b.fecha.startsWith('2026-04')
   })
 
-  const guardarBoleta = () => {
-    if (!form.fecha || !form.horaInicio || !form.horaFin || !form.orden) return
-    const horas = calcularHoras(form.horaInicio, form.horaFin)
-    setBoletas([...boletas, { id: Date.now(), subtareaId: Number(form.subtareaId), subtarea: 'Subtarea', orden: form.orden, ...form, horas, estado: 'registrada' }])
-    setModalBoleta(false)
+  const enviarSolicitudTarea = () => {
+    if (!formTarea.os || !formTarea.nombre || !formTarea.estimacion) return
+    agregarSolicitudNuevaTarea({ ...formTarea, recurso: 'Sofía Barboza' })
+    setModalNuevaTarea(false)
+    setFormTarea({ os: '', osNombre: '', nombre: '', descripcion: '', estimacion: '', causa: '', justificacion: '' })
   }
 
-  if (subtareaDetalle) {
-    return <SubtareaDetalle subtarea={subtareaDetalle} boletas={boletas} setBoletas={setBoletas} onVolver={() => setSubtareaDetalle(null)} />
+  if (subtareaDetalleId) {
+    return <SubtareaDetalle subtareaId={subtareaDetalleId} onVolver={() => setSubtareaDetalleId(null)} />
   }
 
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mis boletas de tiempo</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Registrá y consultá tus horas trabajadas</p>
+          <h1 className="text-2xl font-bold text-slate-900">Boletas de tiempo</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Registrá y consultá las horas trabajadas por subtarea</p>
         </div>
-        <button onClick={() => setModalBoleta(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
-          <Plus size={16} /> Nueva boleta
+        <button onClick={() => setModalNuevaTarea(true)}
+          className="flex items-center gap-2 border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+          <Plus size={16} /> Solicitar nueva subtarea
         </button>
       </div>
 
-      {/* Resumen compacto */}
+      {/* Resumen */}
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: 'Hoy', valor: `${horasHoy}h`, sub: hoy },
           { label: 'Esta semana', valor: `${horasSemana}h`, sub: 'Lun – Dom' },
           { label: 'Este mes', valor: `${horasMes}h`, sub: 'Abril 2026' },
-          { label: 'Tiempo restante', valor: `${tiempoRestante}h`, sub: 'En subtareas activas' },
+          { label: 'Tiempo restante', valor: `${tiempoRestante}h`, sub: 'Subtareas activas' },
         ].map(t => (
-          <div key={t.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-500">{t.label}</p>
-              <p className="text-xl font-bold text-slate-900">{t.valor}</p>
-              <p className="text-xs text-slate-400">{t.sub}</p>
-            </div>
+          <div key={t.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3">
+            <p className="text-xs text-slate-500">{t.label}</p>
+            <p className="text-xl font-bold text-slate-900">{t.valor}</p>
+            <p className="text-xs text-slate-400">{t.sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Tabs principales */}
+      {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200">
         {[
-          { id: 'subtareas', label: 'Mis subtareas', count: misSubtareasFlat.length },
-          { id: 'boletas', label: 'Mis boletas', count: boletas.length },
+          { id: 'subtareas', label: 'Mis subtareas', count: subtareas.length },
+          { id: 'boletas',   label: 'Mis boletas',   count: boletas.length },
         ].map(tab => (
           <button key={tab.id} onClick={() => setTabActiva(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${tabActiva === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
@@ -764,14 +824,13 @@ export default function Boletas() {
       {/* Tab subtareas */}
       {tabActiva === 'subtareas' && (
         <div className="flex flex-col gap-3">
-          {/* Filtros */}
           <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap gap-3 items-center">
             <FunnelSimple size={15} className="text-slate-400" />
             <div className="relative flex-1 min-w-48">
               <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="text" placeholder="Buscar por #, nombre, tarea, OS..." value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <select value={filtroOS} onChange={e => setFiltroOS(e.target.value)}
               className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
@@ -793,8 +852,7 @@ export default function Boletas() {
               <option value="baja">Baja</option>
             </select>
           </div>
-
-          <TablaSubtareas subtareas={subtareasFiltradas} onVerDetalle={setSubtareaDetalle} />
+          <TablaSubtareas subtareas={subtareasFiltradas} onVerDetalle={sub => setSubtareaDetalleId(sub.id)} />
         </div>
       )}
 
@@ -833,6 +891,7 @@ export default function Boletas() {
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span className="text-sm font-medium text-slate-900">{b.subtarea}</span>
                         <span className="text-xs text-slate-400">{b.orden}</span>
+                        {b.categoria && <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{b.categoria}{b.subcategoria ? ` / ${b.subcategoria}` : ''}</span>}
                         {b.estado === 'borrador' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Borrador</span>}
                         {!b.esCobrable && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">No cobrable</span>}
                       </div>
@@ -892,12 +951,6 @@ export default function Boletas() {
                           <p className="font-bold">{b.horas}h</p>
                         </div>
                       ))}
-                      {boletasDia.length === 0 && esHoy && (
-                        <button onClick={() => setModalBoleta(true)}
-                          className="w-full h-10 border border-dashed border-blue-300 rounded-lg text-xs text-blue-400 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1">
-                          <Plus size={11} /> Agregar
-                        </button>
-                      )}
                     </div>
                   )
                 })}
@@ -907,84 +960,78 @@ export default function Boletas() {
         </div>
       )}
 
-      {/* Modal nueva boleta */}
-      {modalBoleta && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Nueva boleta de tiempo</h2>
-              <button onClick={() => setModalBoleta(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
+      {/* Modal solicitar nueva subtarea */}
+      {modalNuevaTarea && (
+        <Modal titulo="Solicitar nueva subtarea" onClose={() => setModalNuevaTarea(false)}
+          footer={
+            <>
+              <button onClick={() => setModalNuevaTarea(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+              <button onClick={enviarSolicitudTarea} className="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">Enviar solicitud</button>
+            </>
+          }>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-700">Orden de servicio</label>
+            <select value={formTarea.os}
+              onChange={e => {
+                const op = osOpciones.find(o => o.os === e.target.value)
+                setFormTarea(f => ({ ...f, os: e.target.value, osNombre: op?.nombre || '' }))
+              }}
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">Seleccionar OS...</option>
+              {osOpciones.map(o => <option key={o.os} value={o.os}>{o.os} — {o.nombre}</option>)}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-700">Nombre de la subtarea</label>
+            <input type="text" value={formTarea.nombre} onChange={e => setFormTarea(f => ({ ...f, nombre: e.target.value }))}
+              placeholder="Ej: Implementar notificaciones push"
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-700">Descripción</label>
+            <textarea value={formTarea.descripcion} onChange={e => setFormTarea(f => ({ ...f, descripcion: e.target.value }))}
+              rows={3} placeholder="Describí el trabajo a realizar..."
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-slate-700">Estimación (horas)</label>
+              <input type="number" min="1" value={formTarea.estimacion} onChange={e => setFormTarea(f => ({ ...f, estimacion: e.target.value }))}
+                placeholder="Ej: 8"
+                className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Orden de servicio</label>
-                  <select value={form.orden} onChange={e => setForm({ ...form, orden: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="">Seleccionar...</option>
-                    {osUnicas.map(os => <option key={os}>{os}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Subtarea</label>
-                  <select className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="">Seleccionar...</option>
-                    {misSubtareasFlat.filter(s => s.estado !== 'finalizada').map(s => (
-                      <option key={s.id} value={s.id}>{s.codigo} — {s.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Tipo de labor</label>
-                <select value={form.tipoLabor} onChange={e => setForm({ ...form, tipoLabor: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                  <option value="">Seleccionar...</option>
-                  <option>Desarrollo / Frontend / Implementación</option>
-                  <option>Desarrollo / Backend / API REST</option>
-                  <option>Soporte / Incidencias / Nivel 1</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-700">Descripción</label>
-                <textarea value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })}
-                  rows={2} placeholder="Describí las labores realizadas..."
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Fecha</label>
-                  <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Hora inicio</label>
-                  <input type="time" value={form.horaInicio} onChange={e => setForm({ ...form, horaInicio: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-700">Hora fin</label>
-                  <input type="time" value={form.horaFin} onChange={e => setForm({ ...form, horaFin: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-              {form.horaInicio && form.horaFin && calcularHoras(form.horaInicio, form.horaFin) > 0 && (
-                <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2.5">
-                  <Clock size={15} className="text-blue-600" />
-                  <span className="text-sm text-blue-700 font-semibold">Total: {calcularHoras(form.horaInicio, form.horaFin)}h</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="cob2" checked={form.esCobrable} onChange={e => setForm({ ...form, esCobrable: e.target.checked })} className="w-4 h-4 accent-blue-600" />
-                <label htmlFor="cob2" className="text-sm text-slate-700">Es cobrable</label>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setModalBoleta(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-              <button onClick={guardarBoleta} className="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">Registrar</button>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-slate-700">Causa</label>
+              <select value={formTarea.causa} onChange={e => setFormTarea(f => ({ ...f, causa: e.target.value }))}
+                className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">Seleccionar...</option>
+                <option>Alcance no contemplado</option>
+                <option>Solicitud del cliente</option>
+                <option>Mejora identificada</option>
+                <option>Corrección de análisis</option>
+                <option>Otro</option>
+              </select>
             </div>
           </div>
-        </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-700">Justificación</label>
+            <textarea value={formTarea.justificacion} onChange={e => setFormTarea(f => ({ ...f, justificacion: e.target.value }))}
+              rows={2} placeholder="Explicá por qué es necesaria esta subtarea..."
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+          </div>
+
+          <div className="flex items-center justify-end">
+            <button type="button"
+              className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 hover:bg-slate-50 transition-colors">
+              <Paperclip size={13} /> Adjuntar archivo
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

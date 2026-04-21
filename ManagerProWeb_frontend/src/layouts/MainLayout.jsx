@@ -8,6 +8,8 @@ import {
   FolderOpen,
   Headset,
   Clock,
+  ArrowClockwise,
+  CheckSquare,
   ChartBar,
   Gear,
   SignOut,
@@ -31,6 +33,8 @@ const menuItems = [
     items: [
       { label: 'Órdenes de servicio', icon: FolderOpen, ruta: '/ordenes' },
       { label: 'Boletas de tiempo', icon: Clock, ruta: '/boletas' },
+      { label: 'Solicitudes de tiempo', icon: ArrowClockwise, ruta: '/solicitudes-incremento' },
+      { label: 'Aprobación de subtareas', icon: CheckSquare, ruta: '/aprobacion-subtareas' },
       { label: 'Soporte', icon: Headset, ruta: '/soporte' },
       { label: 'Prueba API', icon: Clock, ruta: '/PruebaAPI' },
     ]
